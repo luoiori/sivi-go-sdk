@@ -1,8 +1,9 @@
 # 配置文件
 config.yaml
 config.yml
-example/config.yaml
-example/config.yml
+
+# 示例目录（本地保留，不上传）
+example/
 
 # 构建文件
 build/
