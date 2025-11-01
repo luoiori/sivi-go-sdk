@@ -20,15 +20,18 @@ fi
 # 获取当前commit ID
 COMMIT_ID=$(git rev-parse --short HEAD)
 
+# 获取GMT+8时间戳
+TIMESTAMP=$(TZ='Asia/Shanghai' date '+%Y%m%d%H%M%S')
+
 # 版本号设置
 if [[ -n "$1" ]]; then
-    # 使用指定版本号 + commit ID
-    VERSION="$1-${COMMIT_ID}"
+    # 使用指定版本号 + 时间戳 + commit ID
+    VERSION="$1.${TIMESTAMP}.${COMMIT_ID}"
     echo "使用指定版本号: ${VERSION}"
 else
-    # 只使用 commit ID
-    VERSION="${COMMIT_ID}"
-    echo "使用commit ID作为版本号: ${VERSION}"
+    # 使用 0.0.0 + 时间戳 + commit ID
+    VERSION="0.0.0.${TIMESTAMP}.${COMMIT_ID}"
+    echo "使用默认版本号: ${VERSION}"
 fi
 
 # 检查标签是否已存在
