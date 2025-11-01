@@ -1,0 +1,8 @@
+sivi:
+  sdk:
+    app: ""
+    app-id: 0
+    server: ""
+    profile: ""
+    metric-url: ""
+    period: 5
