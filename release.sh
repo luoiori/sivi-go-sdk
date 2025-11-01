@@ -26,11 +26,11 @@ TIMESTAMP=$(TZ='Asia/Shanghai' date '+%Y%m%d%H%M%S')
 # 版本号设置
 if [[ -n "$1" ]]; then
     # 使用指定版本号 + 时间戳 + commit ID
-    VERSION="$1.${TIMESTAMP}.${COMMIT_ID}"
+    VERSION="$1-${TIMESTAMP}-${COMMIT_ID}"
     echo "使用指定版本号: ${VERSION}"
 else
     # 使用 0.0.0 + 时间戳 + commit ID
-    VERSION="0.0.0.${TIMESTAMP}.${COMMIT_ID}"
+    VERSION="0.0.0-${TIMESTAMP}-${COMMIT_ID}"
     echo "使用默认版本号: ${VERSION}"
 fi
 
