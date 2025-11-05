@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"go.opentelemetry.io/otel/sdk/resource"
 )
 
@@ -44,6 +45,18 @@ func NewClient(config *Config) (*Client, error) {
 	opts := []otlpmetrichttp.Option{
 		otlpmetrichttp.WithEndpoint(endpoint),
 		otlpmetrichttp.WithURLPath(path),
+		otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression),
+		otlpmetrichttp.WithTemporalitySelector(func(sdkmetric.InstrumentKind) metricdata.Temporality {
+			return metricdata.DeltaTemporality
+		}),
+		otlpmetrichttp.WithAggregationSelector(func(ik sdkmetric.InstrumentKind) sdkmetric.Aggregation {
+			if ik == sdkmetric.InstrumentKindHistogram {
+				return sdkmetric.AggregationExplicitBucketHistogram{
+					Boundaries: []float64{200, 500, 1000, 3000},
+				}
+			}
+			return sdkmetric.DefaultAggregationSelector(ik)
+		}),
 	}
 	if insecure {
 		opts = append(opts, otlpmetrichttp.WithInsecure())
@@ -72,14 +85,6 @@ func NewClient(config *Config) (*Client, error) {
 	provider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(reader),
-		sdkmetric.WithView(sdkmetric.NewView(
-			sdkmetric.Instrument{Kind: sdkmetric.InstrumentKindHistogram},
-			sdkmetric.Stream{
-				Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
-					Boundaries: []float64{200, 500, 1000, 3000},
-				},
-			},
-		)),
 	)
 
 	otel.SetMeterProvider(provider)
@@ -109,6 +114,20 @@ func (c *Client) HistogramBuilder(name string) HistogramBuilder {
 
 func (c *Client) Shutdown(ctx context.Context) error {
 	return c.provider.Shutdown(ctx)
+}
+
+type GaugeBuilder struct {
+	meter metric.Meter
+	name  string
+}
+
+func (gb GaugeBuilder) Build() Gauge {
+	gauge, _ := gb.meter.Float64ObservableGauge(gb.name)
+	return Gauge{gauge: gauge}
+}
+
+type Gauge struct {
+	gauge metric.Float64ObservableGauge
 }
 
 func (c *Client) ForceFlush(ctx context.Context) error {
